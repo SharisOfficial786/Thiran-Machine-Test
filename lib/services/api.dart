@@ -12,7 +12,7 @@ class ApiProvider {
     try {
       http.Response response = await http.get(
         Uri.parse(
-          'https://api.github.com/search/repositories?q=created:%3E2020-01-27&sort=stars&order=desc',
+          'https://api.github.com/search/repositories?q=created:%3E2022-04-29&sort=stars&order=desc',
         ),
       );
 
@@ -53,7 +53,7 @@ class ApiProvider {
           /// if current date is having no data
           /// call the api again with 1 day before as date
           return await getRefreshedUserList(
-            date: DateTime.now().subtract(const Duration(days: 10)),
+            date: DateTime.now().subtract(const Duration(days: 1)),
           );
         } else if (userListModel.items != null) {
           for (Item item in userListModel.items!) {
