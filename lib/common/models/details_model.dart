@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+/// class for handling the json response from api
 class DetailsModel {
   final int? totalCount;
   final bool? incompleteResults;
@@ -9,13 +12,17 @@ class DetailsModel {
     this.items,
   });
 
-  factory DetailsModel.fromJson(Map<String, dynamic> json) => DetailsModel(
-        totalCount: json["total_count"],
-        incompleteResults: json["incomplete_results"],
-        items: json["items"] == null
-            ? []
-            : List<Item>.from(json["items"]!.map((x) => Item.fromJson(x))),
-      );
+  factory DetailsModel.fromJson(String data) {
+    Map<String, dynamic> jsonData = json.decode(data);
+
+    return DetailsModel(
+      totalCount: jsonData["total_count"],
+      incompleteResults: jsonData["incomplete_results"],
+      items: jsonData["items"] == null
+          ? []
+          : List<Item>.from(jsonData["items"]!.map((x) => Item.fromJson(x))),
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         "total_count": totalCount,
@@ -81,9 +88,9 @@ class Item {
   final String? cloneUrl;
   final String? svnUrl;
   final String? homepage;
-  final int? size;
-  final int? stargazersCount;
-  final int? watchersCount;
+  final num? size;
+  final num? stargazersCount;
+  final num? watchersCount;
   final String? language;
   final bool? hasIssues;
   final bool? hasProjects;
@@ -91,22 +98,22 @@ class Item {
   final bool? hasWiki;
   final bool? hasPages;
   final bool? hasDiscussions;
-  final int? forksCount;
+  final num? forksCount;
   final dynamic mirrorUrl;
   final bool? archived;
   final bool? disabled;
-  final int? openIssuesCount;
+  final num? openIssuesCount;
   final License? license;
   final bool? allowForking;
   final bool? isTemplate;
   final bool? webCommitSignoffRequired;
   final List<String>? topics;
   final String? visibility;
-  final int? forks;
-  final int? openIssues;
-  final int? watchers;
+  final num? forks;
+  final num? openIssues;
+  final num? watchers;
   final String? defaultBranch;
-  final int? score;
+  final num? score;
 
   Item({
     this.id,

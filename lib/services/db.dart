@@ -1,11 +1,13 @@
+import 'package:machine_test_thiran/common/models/details_db_model.dart';
 import 'package:machine_test_thiran/common/models/details_model.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 class DatabaseProvider {
-  static Database? _database;
+  Database? _database;
 
-  static const String tableName = 'cart';
+  final String userDbName = 'user_database.db';
+  final String userTable = 'user';
 
   /// function to retrieve the initialized database instance,
   /// initializing it if necessary, and returns it.
@@ -19,21 +21,16 @@ class DatabaseProvider {
   Future<Database> initDatabase() async {
     String path = await getDatabasesPath();
     return openDatabase(
-      join(path, 'cart_database.db'),
+      join(path, userDbName),
       onCreate: (db, version) async {
         await db.execute(
           '''
-          CREATE TABLE $tableName(
+          CREATE TABLE $userTable(
             id INTEGER PRIMARY KEY,
-            productId INTEGER,
-            title TEXT,
-            price REAL,
-            description TEXT,
-            category TEXT,
-            image TEXT,
-            ratingRate REAL,
-            ratingCount INTEGER,
-            quantity INTEGER
+            node_id INTEGER,
+            name TEXT,
+            full_name REAL,
+            avatar_url TEXTs
           )
           ''',
         );
@@ -42,23 +39,26 @@ class DatabaseProvider {
     );
   }
 
-  /// function to insert data to db
-  Future<void> addToDb(Item product) async {
+  /// function to batch insert data to db
+  Future<void> insertDetails(List<DetailsDbModel> details) async {
     final db = await database;
-    // Convert rating to JSON string
-    await db.insert(
-      tableName,
-      product.toJson(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    ); // Use replace to handle conflicts
+    final batch = db.batch();
+    for (var detail in details) {
+      batch.insert(
+        userTable,
+        detail.toJson(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+    await batch.commit(noResult: true);
   }
 
   /// function to get the items from db
-  Future<List<Item>> getDbItems() async {
+  Future<List<DetailsDbModel>> getDbItems() async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(tableName);
+    final List<Map<String, dynamic>> maps = await db.query(userTable);
     return List.generate(maps.length, (i) {
-      return Item.fromJson(maps[i]);
+      return DetailsDbModel.fromJson(maps[i]);
     });
   }
 
@@ -66,57 +66,26 @@ class DatabaseProvider {
   Future<bool> hasData() async {
     final db = await database;
     final count = Sqflite.firstIntValue(
-          await db.rawQuery('SELECT COUNT(*) FROM cart'),
+          await db.rawQuery('SELECT COUNT(*) FROM $userTable'),
         ) ??
         0;
     return count > 0;
   }
 
-  /// TODO:- test
-  /**
-   * Future<void> storeApiResponseInDb() async {
-  try {
-    final ApiResponseModel apiResponse = await fetchApiResponse();
-
-    final DbModel dbModel = DbModel(
-      id: apiResponse.id,
-      nodeId: apiResponse.nodeId,
-      name: apiResponse.name,
-      fullName: apiResponse.fullName,
-      type: apiResponse.type,
-      description: apiResponse.description,
-      licenseName: apiResponse.license.name,
-    );
-
-    final Future<Database> database = openDatabase(
-      join(await getDatabasesPath(), 'example_database.db'),
-      onCreate: (db, version) {
-        return db.execute(
-          'CREATE TABLE json_data('
-          'id INTEGER PRIMARY KEY, '
-          'node_id TEXT, '
-          'name TEXT, '
-          'full_name TEXT, '
-          'type TEXT, '
-          'description TEXT, '
-          'license_name TEXT)',
-        );
-      },
-      version: 1,
-    );
-
-    final Database db = await database;
-
-    await db.insert(
-      'json_data',
-      dbModel.toJson(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
-  } catch (e) {
-    print('Error storing API response in database: $e');
-    // Handle error as needed
+  /// function to clear db
+  Future<void> clearDatabase() async {
+    final db = await database;
+    await db.rawDelete("DELETE FROM $userTable");
   }
-}
 
-   *  */ 
+  /// function to convert to DetailsDbModel
+  DetailsDbModel convertFunction(Item data) {
+    return DetailsDbModel(
+      id: data.id,
+      nodeId: data.nodeId,
+      name: data.name,
+      fullName: data.fullName,
+      avatarUrl: data.owner?.avatarUrl,
+    );
+  }
 }
